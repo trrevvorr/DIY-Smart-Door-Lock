@@ -1,0 +1,5 @@
+LOCK = "lock"
+UNLOCK = "unlock"
+BUZZ = "buzz"
+TOGGLE = "toggle"
+DELAY_LOCK = "delay_lock"
