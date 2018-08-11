@@ -33,19 +33,25 @@ def _setup():
 	return servo	
 
 def _lock(servo):
-	servo.start(settings.SERVO_LOCKED_POSITION)
-	GPIO.output(pins.LOCK_STATUS_LED_PIN,GPIO.HIGH)
-	time.sleep(settings.SERVO_ROTATION_DURATION)
-	servo.stop()
+	try:
+		servo.start(settings.SERVO_LOCKED_POSITION)
+		GPIO.output(pins.LOCK_STATUS_LED_PIN,GPIO.HIGH)
+		time.sleep(settings.SERVO_ROTATION_DURATION)
+	finally:
+		servo.stop()
 
 def _unlock(servo):
-	servo.start(settings.SERVO_UNLOCKED_POSITION)
-	GPIO.output(pins.LOCK_STATUS_LED_PIN,GPIO.LOW)
-	time.sleep(settings.SERVO_ROTATION_DURATION)
-	servo.stop()
+	try:
+		servo.start(settings.SERVO_UNLOCKED_POSITION)
+		GPIO.output(pins.LOCK_STATUS_LED_PIN,GPIO.LOW)
+		time.sleep(settings.SERVO_ROTATION_DURATION)
+	finally:
+		servo.stop()
 	
 def _buzz():
-	GPIO.output(pins.BUZZER_PIN,GPIO.HIGH) # start buzzing
-	time.sleep(settings.BUZZ_DURATION)
-	GPIO.output(pins.BUZZER_PIN,GPIO.LOW) # end buzzing
+	try:
+		GPIO.output(pins.BUZZER_PIN,GPIO.HIGH) # start buzzing
+		time.sleep(settings.BUZZ_DURATION)
+	finally:
+		GPIO.output(pins.BUZZER_PIN,GPIO.LOW) # end buzzing
 
