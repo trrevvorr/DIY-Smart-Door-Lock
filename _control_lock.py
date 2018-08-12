@@ -16,6 +16,8 @@ def main(action):
 		buzz_thread = threading.Thread(target=_buzz)
 		buzz_thread.start()
 		_unlock(servo)
+	else:
+		raise NotImplementedError
 	# GPIO.cleanup() # disbled in order to keep LED lit
 
 def _setup():
@@ -29,8 +31,8 @@ def _setup():
 	# buzzer pin
 	GPIO.setup(pins.BUZZER_PIN, GPIO.OUT)
 	GPIO.output(pins.BUZZER_PIN,GPIO.LOW)
-	
-	return servo	
+
+	return servo
 
 def _lock(servo):
 	try:
@@ -47,7 +49,7 @@ def _unlock(servo):
 		time.sleep(settings.SERVO_ROTATION_DURATION)
 	finally:
 		servo.stop()
-	
+
 def _buzz():
 	try:
 		GPIO.output(pins.BUZZER_PIN,GPIO.HIGH) # start buzzing
