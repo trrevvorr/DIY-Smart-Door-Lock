@@ -19,7 +19,9 @@ def main(action):
 		_buzz()
 		_unlock(servo)
 	elif action == commands.TOGGLE:
-		_toggle_lock(servo)
+		_toggleLock(servo)
+	elif action == commands.DELAY_LOCK:
+		_delayLock(servo)
 	else:
 		raise NotImplementedError
 	# GPIO.cleanup() # disbled in order to keep LED lit
@@ -63,7 +65,7 @@ def _buzz():
 	finally:
 		GPIO.output(pins.BUZZER_PIN,GPIO.LOW) # end buzzing
 
-def _toggle_lock(servo):
+def _toggleLock(servo):
 	if _isCurrentlyLocked():
 		_unlock(servo)
 	else:
@@ -98,4 +100,7 @@ def _setStateValue(key, value):
 		raw_json = json.dumps(persistent_state)
 		f.write(raw_json)
 
-
+def _delayLock(servo):
+	_unlock(servo)
+	time.sleep(settings.DELAYED_LOCK_DELAY)
+	_lock(servo)
