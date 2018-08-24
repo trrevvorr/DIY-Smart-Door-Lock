@@ -1,5 +1,6 @@
 LOCK = "lock"
 UNLOCK = "unlock"
 BUZZ = "buzz"
+BUZZ_AND_UNLOCK = "buzz_and_unlock"
 TOGGLE = "toggle"
 DELAY_LOCK = "delay_lock"

@@ -12,9 +12,7 @@ import settings
 
 class TestServoControls(unittest.TestCase):
 
-	"""
-	SETUP AND TEARDOWN
-	"""
+	#region setup and teardown
 	def setUp(self):
 		self._sleep_patch = mock.patch("time.sleep", autospec=True)
 		self.sleep_mock = self._sleep_patch.start()
@@ -39,10 +37,9 @@ class TestServoControls(unittest.TestCase):
 		self._setwarnings_patch.stop()
 		self._setmode_patch.stop()
 		self._open_patch.stop()
+	#endregion
 
-	"""
-	TEST SETUP MOCKS
-	"""
+	#region setup mocks
 	def test_setup_mocks(self):
 		assert self.sleep_mock is time.sleep
 		assert self.output_mock is GPIO.output
@@ -50,24 +47,21 @@ class TestServoControls(unittest.TestCase):
 		assert self.setup_mock is GPIO.setup
 		assert self.setwarnings_mock is GPIO.setwarnings
 		assert self.setmode_mock is GPIO.setmode
+	#endregion
 
-	"""
-	TEST INVALID commmands
-	"""
+	#region invaild commands
 	def test_invalid_command_fails(self):
 		with self.assertRaises(NotImplementedError):
 			_control_lock.main("BOGUS")
+	#endregion
 
-	"""
-	TESTING _setup
-	"""
+	#region _setup
 	@mock.patch("_control_lock._lock", autospec=True)
 	def test_setup_setwarnings(self, mock__lock):
 		assert mock__lock is _control_lock._lock
 		assert self.setwarnings_mock is GPIO.setwarnings
 		_control_lock.main(commands.LOCK)
 		self.setwarnings_mock.assert_called_once_with(False)
-
 
 	@mock.patch("_control_lock._lock", autospec=True)
 	def test_setup_setmode(self, mock__lock):
@@ -95,10 +89,9 @@ class TestServoControls(unittest.TestCase):
 		assert mock__lock is _control_lock._lock
 		_control_lock.main(commands.LOCK)
 		self.output_mock.assert_called_once_with(pins.BUZZER_PIN,GPIO.LOW)
+	#endregion
 
-	"""
-	TESTING _lock
-	"""
+	#region _lock
 	@mock.patch("_control_lock._setup", autospec=True)
 	def test_lock_output(self, mock__setup):
 		# setup
@@ -136,10 +129,9 @@ class TestServoControls(unittest.TestCase):
 		_control_lock.main(commands.LOCK)
 		# test assertions
 		mock__setStateValue.assert_called_once_with(settings.LOCKED_STATE_KEY, True)
+	#endregion
 
-	"""
-	TESTING _unlock
-	"""
+	#region _unlock
 	@mock.patch("_control_lock._setup", autospec=True)
 	def test_unlock_output(self, mock__setup):
 		# setup
@@ -177,10 +169,9 @@ class TestServoControls(unittest.TestCase):
 		_control_lock.main(commands.UNLOCK)
 		# test assertions
 		mock__setStateValue.assert_called_once_with(settings.LOCKED_STATE_KEY, False)
+	#endregion
 
-	"""
-	TESTING _buzz
-	"""
+	#region _buzz
 	@mock.patch("_control_lock._setup", autospec=True)
 	def test_buzz_setsOutputHighThenLow(self, mock__setup):
 		# setup
@@ -195,36 +186,61 @@ class TestServoControls(unittest.TestCase):
 		self.output_mock.assert_has_calls(calls)
 
 	@mock.patch("_control_lock._setup", autospec=True)
+	def test_buzz_callsSleep(self, mock__setup):
+		# setup
+		mock__setup.return_value = MockServo()
+		# test mocks
+		assert mock__setup is _control_lock._setup
+		# call tag under test
+		_control_lock.main(commands.BUZZ)
+		# test assertions
+		self.sleep_mock.assert_called_once_with(settings.BUZZ_DURATION)
+	#endregion
+
+	#region _buzzAndUnlock
+	@mock.patch("_control_lock._setup", autospec=True)
+	def test_buzzAndUnlock_setsOutputHighThenLow(self, mock__setup):
+		# setup
+		mock__setup.return_value = MockServo()
+		# test mocks
+		assert mock__setup is _control_lock._setup
+		# call tag under test
+		_control_lock.main(commands.BUZZ_AND_UNLOCK)
+		# test assertions
+		calls = [mock.call(pins.BUZZER_PIN, GPIO.HIGH),
+				 mock.call(pins.BUZZER_PIN, GPIO.LOW)]
+		self.output_mock.assert_has_calls(calls)
+
+	@mock.patch("_control_lock._setup", autospec=True)
 	@mock.patch("_control_lock._unlock", autospec=True)
-	def test_buzz_callsUnlock(self, mock__unlock, mock__setup):
+	def test_buzzAndUnlock_callsUnlock(self, mock__unlock, mock__setup):
 		# setup
 		mock__setup.return_value = MockServo()
 		# test mocks
 		assert mock__setup is _control_lock._setup
 		assert mock__unlock is _control_lock._unlock
 		# call tag under test
-		_control_lock.main(commands.BUZZ)
+		_control_lock.main(commands.BUZZ_AND_UNLOCK)
 		# test assertions
 		mock__unlock.assert_called_once_with(mock__setup.return_value)
 
 	@mock.patch("_control_lock._setup", autospec=True)
-	def test_buzz_callsSleepInOrder(self, mock__setup):
+	def test_buzzAndUnlock_callsSleepInOrder(self, mock__setup):
 		# setup
 		mock__setup.return_value = MockServo()
 		# test mocks
 		assert mock__setup is _control_lock._setup
 		# call tag under test
-		_control_lock.main(commands.BUZZ)
+		_control_lock.main(commands.BUZZ_AND_UNLOCK)
 		# test assertions
 		calls = [
 			mock.call(settings.BUZZ_DURATION),
 			mock.call(settings.SERVO_ROTATION_DURATION),
 		]
 		self.sleep_mock.assert_has_calls(calls)
+	#endregion
 
-	"""
-	TESTING _toggleLock
-	"""
+	#region _toggleLock
 	@mock.patch("_control_lock._setup", autospec=True)
 	@mock.patch("_control_lock._lock", autospec=True)
 	@mock.patch("_control_lock._unlock", autospec=True)
@@ -280,10 +296,9 @@ class TestServoControls(unittest.TestCase):
 		# test assertions
 		mock__lock.assert_called_once_with(mock__setup.return_value)
 		assert not mock__unlock.called
+	#endregion
 
-	"""
-	TESTING _getStateValue
-	"""
+	#region _getStateValue
 	def test_getStateValue_goodKey(self):
 		# setup
 		json_data = '{"locked": false}'
@@ -305,11 +320,9 @@ class TestServoControls(unittest.TestCase):
 			with self.assertRaises(KeyError) as context:
 				_control_lock._getStateValue("badKey")
 			self.assertTrue("badKey" in context.exception)
+	#endregion
 
-
-	"""
-	TESTING _setStateValue
-	"""
+	#region _setStateValue
 	def test_setStateValue_existingKey(self):
 		# setup
 		key_to_modify = "locked"
@@ -355,10 +368,9 @@ class TestServoControls(unittest.TestCase):
 			# check write call
 			handle = mock_file()
 			handle.write.assert_called_once_with(new_json_data)
+	#endregion
 
-	"""
-	TESTING _getStateValue
-	"""
+	#region _getStateValue
 	@mock.patch("_control_lock._getStateValue", autospec=True, side_effect=KeyError)
 	def test_isCurrentlyLocked_FalseOnKeyError(self, mock__getStateValue):
 		# setup
@@ -390,10 +402,9 @@ class TestServoControls(unittest.TestCase):
 		locked = _control_lock._isCurrentlyLocked()
 		# test assertions
 		assert locked is False
+	#endregion
 
-	"""
-	TESTING _delayLock
-	"""
+	#region _delayLock
 	@mock.patch("_control_lock._setup", autospec=True)
 	@mock.patch("_control_lock._unlock", autospec=True)
 	def test_delayLock_callsUnlock(self, mock__unlock, mock__setup):
@@ -421,22 +432,6 @@ class TestServoControls(unittest.TestCase):
 		mock__lock.assert_called_once_with(mock__setup.return_value)
 
 	@mock.patch("_control_lock._setup", autospec=True)
-	def test_delayLock_callsSleepsInOrder(self, mock__setup):
-		# setup
-		mock__setup.return_value = MockServo()
-		# test mocks
-		assert mock__setup is _control_lock._setup
-		# call tag under test
-		_control_lock.main(commands.DELAY_LOCK)
-		# test assertions
-		calls = [
-			mock.call(settings.SERVO_ROTATION_DURATION),
-			mock.call(settings.DELAYED_LOCK_DELAY),
-			mock.call(settings.SERVO_ROTATION_DURATION),
-		]
-		self.sleep_mock.assert_has_calls(calls)
-
-	@mock.patch("_control_lock._setup", autospec=True)
 	@mock.patch("__main__.MockServo", autospec=True)
 	def test_delayLock_callsUnlockThenLock(self, mock_MockServo, mock__setup):
 		# setup
@@ -453,9 +448,29 @@ class TestServoControls(unittest.TestCase):
 		]
 		mock_MockServo.return_value.start.assert_has_calls(calls)
 
+	@mock.patch("_control_lock._setup", autospec=True)
+	@mock.patch("_control_lock._unlock", autospec=True)
+	@mock.patch("_control_lock._lock", autospec=True)
+	def test_delayLock_blinksLED(self, mock__lock, mock__unlock, mock__setup):
+		# setup
+		mock__setup.return_value = MockServo()
+		# test mocks
+		assert mock__setup is _control_lock._setup
+		assert mock__unlock is _control_lock._unlock
+		assert mock__lock is _control_lock._lock
+		# call tag under test
+		_control_lock.main(commands.DELAY_LOCK)
+		# test assertions
+		calls = []
+		for i in range(settings.DELAYED_LOCK_DELAY):
+			# blink LED
+			calls.append(mock.call(pins.LOCK_STATUS_LED_PIN, GPIO.LOW)) # off
+			calls.append(mock.call(pins.LOCK_STATUS_LED_PIN, GPIO.HIGH)) # on
+
+		self.output_mock.assert_has_calls(calls)
+	#endregion
 
 
-# TODO: can I replace GPIO.PWM(pins.SERVO_PIN, 50) with MockServo()?
 class MockServo:
 	def start(self, dummy=0):
 		pass
